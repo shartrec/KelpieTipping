@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2003-2025. Trevor Campbell and others.
+  ~
+  ~ This file is part of KelpieTipping.
+  ~
+  ~ KelpieTipping is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation; either version 2 of the License,or
+  ~ (at your option) any later version.
+  ~
+  ~ KelpieTipping is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with KelpieTipping; if not, write to the Free Software
+  ~ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  ~
+  ~ Contributors:
+  ~      Trevor Campbell
+  ~
+  -->
+
+<interface domain="kelpie_tipping">
+  <requires lib="gtk+" version="4.0"/>
+  <menu id="main-menu">
+    <submenu>
+      <attribute name="label" translatable="yes">Help</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">About</attribute>
+          <attribute name="action">app.help-about</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Contents</attribute>
+          <attribute name="action">app.help-contents</attribute>
+        </item>
+      </section>
+    </submenu>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Quit</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+    </section>
+  </menu>
+  <template class="KelpieTippingWindow" parent="AdwApplicationWindow">
+    <property name="title" translatable="yes">Kelpie Tipping</property>
+    <property name="default-height">500</property>
+    <property name="default-width">800</property>
+    <child>
+      <object class="AdwBreakpoint">
+        <condition>max-width: 550sp</condition>
+        <setter object="switcher_bar" property="reveal">True</setter>
+        <setter object="header_bar" property="title-widget"/>
+      </object>
+    </child>
+    <property name="content">
+      <object class="AdwToolbarView">
+        <child type="top">
+          <object class="AdwHeaderBar" id="header_bar">
+            <child>
+              <object class="GtkMenuButton">
+                <property name="icon-name">open-menu-symbolic</property>
+                <property name="menu-model">main-menu</property>
+              </object>
+            </child>
+            <property name="title-widget">
+              <object class="AdwViewSwitcher">
+                <property name="stack">stack</property>
+                <property name="policy">wide</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <property name="content">
+          <object class="AdwViewStack" id="stack">
+
+            <child>
+              <object class="AdwViewStackPage">
+                <property name="name">teams</property>
+                <property name="title">Teams</property>
+                <property name="child">
+                  <object class="AdwClamp">
+                    <property name="maximum-size">200</property>
+                    <property name="halign">start</property>
+                    <property name="child">
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">18</property>
+                        <property name="margin-top">24</property>
+                        <property name="margin-bottom">24</property>
+                        <property name="margin-start">12</property>
+                        <property name="margin-end">12</property>
+                        <child>
+                          <object class="GtkEntry" id="entry">
+                            <property name="placeholder-text" translatable="yes">Enter a Task…</property>
+                            <property name="secondary-icon-name">list-add-symbolic</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBox" id="tasks_list">
+                            <property name="visible">False</property>
+                            <property name="selection-mode">none</property>
+                            <style>
+                              <class name="boxed-list" />
+                            </style>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwViewStackPage">
+                <property name="name">overview</property>
+                <property name="title">Tipsters</property>
+                <property name="child">
+                  <object class="AdwStatusPage">
+                    <property name="title">Those who tip!</property>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwViewStackPage">
+                <property name="name">Rounds</property>
+                <property name="title">Rounds</property>
+                <property name="child">
+                  <object class="AdwStatusPage">
+                    <property name="title">Rounds!</property>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </property>
+      </object>
+    </property>
+  </template>
+</interface>

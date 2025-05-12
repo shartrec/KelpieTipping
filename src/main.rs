@@ -1,20 +1,20 @@
 /*
- * Copyright (c) 2025. Trevor Campbell and others.
+ * Copyright (c) 2025-2025. Trevor Campbell and others.
  *
- * This file is part of Kelpie Tips.
+ * This file is part of KelpieTipping.
  *
- * Kelpie Tips is free software; you can redistribute it and/or modify
+ * KelpieTipping is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 2 of the License,or
  * (at your option) any later version.
  *
- * Kelpie Tips is distributed in the hope that it will be useful,
+ * KelpieTipping is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Kelpie Tips; if not, write to the Free Software
+ * along with KelpieTipping; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Contributors:
@@ -34,11 +34,16 @@ use adw::gdk::Display;
 use gtk::gio::{Cancellable, File, SimpleAction};
 use gtk::glib::clone;
 use adw::prelude::*;
-use adw::subclass::prelude::ObjectSubclassIsExt;
+use adw::subclass::prelude::{ObjectSubclass, ObjectSubclassIsExt};
 use log::{error, warn};
 use util::Logger;
-use window::{preferences::PreferenceDialog, Window};
+// use window::Window;
 use gettextrs::{TextDomain, TextDomainError};
+use crate::util::info;
+use crate::window::Window;
+use crate::window::util::show_help_about;
+
+const APP_ID: &str = "com.shartrec.KelpieTipping";
 
 fn main() -> glib::ExitCode {
 
@@ -46,12 +51,10 @@ fn main() -> glib::ExitCode {
     // and flush it when the instance goes out of scope
     let _logger = Logger::new();
 
-    init_locale();
-
-    init_opengl();
+    // init_locale();
 
     // Register and include resources
-    gio::resources_register_include!("kelpie_planner.gresource")
+    gio::resources_register_include!("kelpie_tipping.gresource")
         .expect("Failed to register resources.");
 
     // Create a new application
@@ -129,7 +132,7 @@ fn init_locale() {
 fn load_css() {
     // Load the CSS file and add it to the provider
     let provider = CssProvider::new();
-    provider.load_from_resource("/com/shartrec/kelpie_planner/style.css");
+    provider.load_from_resource("/com/shartrec/kelpie_tipping/style.css");
 
     // Add the provider to the default screen
     gtk::style_context_add_provider_for_display(
@@ -164,7 +167,6 @@ fn connect_actions(app: &Application, window: &Window) {
 }
 
 fn build_ui(app: &Application) {
-    // Create new window and present it
     let window = Window::new(app);
     connect_actions(app, &window);
     window.present();

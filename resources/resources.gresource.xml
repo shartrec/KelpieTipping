@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2003-2023. Trevor Campbell and others.
+  -->
+
+<gresources>
+  <gresource prefix="/com/shartrec/kelpie_tipping/">
+    <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
+
+    <!-- Icon images follow -->
+    <file>images/kelpiedog_120x120_transparent.png</file>
+
+    <!--CSS-->
+    <file compressed="true">style.css</file>
+
+  </gresource>
+</gresources>
