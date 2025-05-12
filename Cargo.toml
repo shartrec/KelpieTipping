@@ -1,0 +1,25 @@
+[package]
+name = "KelpieTipping"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = "0.4.38"
+dirs-next = "2.0.0"
+gtk = { version = "0.9", package = "gtk4", features = ["v4_14"] }
+adw = { version = "0.7.2", package = "libadwaita", features = ["v1_5"] }
+log = "0.4"
+rolling-file = "0.2.0"
+gettext-rs = { version = "0.7", features = ["gettext-system"]}
+simplelog = "0.12.2"
+libloading = "0.8.5"
+epoxy = "0.1.0"
+home = "0.5.9"
+async-channel = "2.3.1"
+async-std = "1.13.0"
+
+[profile.release]
+opt-level = 3
+
+[build-dependencies]
+glib-build-tools = "0.20.0"
