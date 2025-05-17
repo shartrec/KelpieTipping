@@ -6,6 +6,8 @@
 <gresources>
   <gresource prefix="/com/shartrec/kelpie_tipping/">
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">team_view.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">team_dialog.ui</file>
 
     <!-- Icon images follow -->
     <file>images/kelpiedog_120x120_transparent.png</file>

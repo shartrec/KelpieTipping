@@ -22,6 +22,8 @@
  *
  */
 pub(crate) mod info;
+pub(crate) mod db;
+pub(crate) mod test_utils;
 
 use std::error::Error;
 use log::LevelFilter;

@@ -34,6 +34,7 @@ use gtk::glib::{clone, MainContext};
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
+use crate::window::team_view::TeamView;
 
 enum SaveType {
     Native,
@@ -45,6 +46,8 @@ enum SaveType {
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/com/shartrec/kelpie_tipping/window.ui")]
 pub struct Window {
+    #[template_child]
+    pub team_view: TemplateChild<TeamView>,
 
 }
 

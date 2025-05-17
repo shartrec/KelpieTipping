@@ -27,6 +27,19 @@
   <requires lib="gtk+" version="4.0"/>
   <menu id="main-menu">
     <submenu>
+      <attribute name="label" translatable="yes">New</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Team</attribute>
+          <attribute name="action">app.new-team</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Tipper</attribute>
+          <attribute name="action">app.new-tipper</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
       <attribute name="label" translatable="yes">Help</attribute>
       <section>
         <item>
@@ -83,34 +96,7 @@
                 <property name="name">teams</property>
                 <property name="title">Teams</property>
                 <property name="child">
-                  <object class="AdwClamp">
-                    <property name="maximum-size">200</property>
-                    <property name="halign">start</property>
-                    <property name="child">
-                      <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">18</property>
-                        <property name="margin-top">24</property>
-                        <property name="margin-bottom">24</property>
-                        <property name="margin-start">12</property>
-                        <property name="margin-end">12</property>
-                        <child>
-                          <object class="GtkEntry" id="entry">
-                            <property name="placeholder-text" translatable="yes">Enter a Task…</property>
-                            <property name="secondary-icon-name">list-add-symbolic</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkListBox" id="tasks_list">
-                            <property name="visible">False</property>
-                            <property name="selection-mode">none</property>
-                            <style>
-                              <class name="boxed-list" />
-                            </style>
-                          </object>
-                        </child>
-                      </object>
-                    </property>
+                  <object class="TeamView" id="team_view">
                   </object>
                 </property>
               </object>

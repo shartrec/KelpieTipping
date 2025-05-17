@@ -21,12 +21,15 @@
  *      Trevor Campbell
  *
  */
-use adw::{gio, glib, Application};
-use adw::glib::Object;
-use gtk::prelude::GtkWindowExt;
+use adw::Application;
+use adw::prelude::GtkWindowExt;
+use glib::Object;
+use gtk::{gio, glib};
 
 pub(crate) mod imp;
 pub(crate) mod util;
+pub(crate) mod team_view;
+pub(crate) mod edit_team;
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)

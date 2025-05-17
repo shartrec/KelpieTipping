@@ -23,14 +23,14 @@
  */
 
 -- Table to store teams
-CREATE TABLE teams (
+CREATE TABLE IF NOT EXISTS teams (
     team_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     nickname VARCHAR(10) NOT NULL
 );
 
 -- Table to store rounds
-CREATE TABLE rounds (
+CREATE TABLE IF NOT EXISTS rounds (
     round_id SERIAL PRIMARY KEY,
     round_number INT NOT NULL,
     start_date DATE NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE rounds (
 );
 
 -- Table to store matches
-CREATE TABLE matches (
+CREATE TABLE IF NOT EXISTS games (
     match_id SERIAL PRIMARY KEY,
     round_id INT NOT NULL REFERENCES rounds(round_id),
     home_team_id INT NOT NULL REFERENCES teams(team_id),
@@ -49,17 +49,17 @@ CREATE TABLE matches (
 );
 
 -- Table to store users
-CREATE TABLE users (
-    user_id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
+CREATE TABLE IF NOT EXISTS tippers (
+    tipper_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- Table to store tips
-CREATE TABLE tips (
+CREATE TABLE IF NOT EXISTS tips (
     tip_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id),
-    match_id INT NOT NULL REFERENCES matches(match_id),
+    user_id INT NOT NULL REFERENCES tippers(tipper_id),
+    match_id INT NOT NULL REFERENCES games(match_id),
     predicted_home_score INT NOT NULL,
     predicted_away_score INT NOT NULL,
     tip_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP

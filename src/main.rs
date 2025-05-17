@@ -26,7 +26,10 @@
 #![forbid(unsafe_code)]
 
 mod window;
-mod util;
+pub(crate) mod util;
+pub(crate) mod model;
+pub(crate) mod preference;
+pub(crate) mod event;
 
 use adw::Application;
 use gtk::{gio, glib, CssProvider, UriLauncher};
@@ -35,12 +38,16 @@ use gtk::gio::{Cancellable, File, SimpleAction};
 use gtk::glib::clone;
 use adw::prelude::*;
 use adw::subclass::prelude::{ObjectSubclass, ObjectSubclassIsExt};
+use async_std::task;
 use log::{error, warn};
 use util::Logger;
 // use window::Window;
 use gettextrs::{TextDomain, TextDomainError};
-use crate::util::info;
+use sqlx::{PgPool, Pool, Postgres};
+use crate::preference::PreferenceManager;
+use crate::util::{db, info};
 use crate::window::Window;
+use crate::window::edit_team::TeamDialog;
 use crate::window::util::show_help_about;
 
 const APP_ID: &str = "com.shartrec.KelpieTipping";
@@ -51,6 +58,8 @@ fn main() -> glib::ExitCode {
     // and flush it when the instance goes out of scope
     let _logger = Logger::new();
 
+    let conn_url = "postgres://shartrec:laverda21@localhost:5432/kelpie_tips";
+    task::block_on(db::initialize_manager(conn_url.to_string()));
     // init_locale();
 
     // Register and include resources
@@ -144,6 +153,14 @@ fn load_css() {
 
 fn connect_actions(app: &Application, window: &Window) {
 
+    let action = SimpleAction::new("new-team", None);
+    action.connect_activate(clone!(#[weak] window, move |_action, _parameter| {
+        let team_dialog = TeamDialog::new();
+        team_dialog.set_transient_for(Some(&window));
+        team_dialog.set_visible(true);
+    }));
+    app.add_action(&action);
+
     let action = SimpleAction::new("quit", None);
     action.connect_activate(clone!(#[weak] app, move |_action, _parameter| {
         app.quit()
@@ -170,4 +187,14 @@ fn build_ui(app: &Application) {
     let window = Window::new(app);
     connect_actions(app, &window);
     window.present();
+}
+
+async fn setup_database() -> Result<Pool<Postgres>, sqlx::Error> {
+    let conn_url =
+        preference::manager().get::<String>(preference::DATABASE_URL).unwrap_or_else(|| {
+            warn!("No database URL found, using default");
+            "sqlite://kelpie.db".to_string()
+        });
+    let pool = sqlx::PgPool::connect(&conn_url).await?;
+    Ok(pool)
 }

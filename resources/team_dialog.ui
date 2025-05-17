@@ -1,0 +1,119 @@
+<!--
+  ~ Copyright (c) 2025. Trevor Campbell and others.
+  ~
+  ~ This file is part of KelpieTipping.
+  ~
+  ~ KelpieTipping is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation; either version 2 of the License,or
+  ~ (at your option) any later version.
+  ~
+  ~ KelpieTipping is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with KelpieTipping; if not, write to the Free Software
+  ~ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  ~
+  ~ Contributors:
+  ~      Trevor Campbell
+  ~
+  -->
+
+<interface>
+  <template class="TeamDialog" parent="GtkWindow">
+    <property name="title" translatable="yes">Add Team</property>
+    <property name="default-height">200</property>
+    <property name="default-width">450</property>
+    <property name="default-widget">btn_ok</property>
+
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <property name="margin-start">5</property>
+        <property name="margin-end">5</property>
+        <property name="margin-top">5</property>
+        <property name="margin-bottom">5</property>
+
+        <child>
+          <object class="GtkGrid">
+            <!--            <property name="vexpand">true</property>-->
+            <!--            <property name="hexpand">true</property>-->
+            <property name="row-spacing">8</property>
+            <property name="column-spacing">5</property>
+            <style>
+              <class name="preference-page"/>
+            </style>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Name</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkEntry" id="team_name">
+                <property name="hexpand">true</property>
+                <property name="width-request">200</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Nickname</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkEntry" id="team_nickname">
+                <property name="width-request">50</property>
+                <property name="max-length">10</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="margin-start">5</property>
+            <property name="margin-top">5</property>
+            <property name="margin-bottom">5</property>
+            <property name="spacing">5</property>
+            <property name="hexpand">true</property>
+            <property name="halign">end</property>
+            <child>
+              <object class="GtkButton" id="btn_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_ok">
+                <property name="label" translatable="yes">Ok</property>
+              </object>
+            </child>
+
+
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
