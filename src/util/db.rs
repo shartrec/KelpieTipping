@@ -21,10 +21,9 @@
  *      Trevor Campbell
  *
  */
-use std::sync::{LazyLock, OnceLock};
 use log::{info, warn};
 use sqlx::PgPool;
-use crate::preference;
+use std::sync::OnceLock;
 
 static MANAGER: OnceLock<ConnectionManager> = OnceLock::new();
 

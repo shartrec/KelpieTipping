@@ -34,6 +34,8 @@ use log::warn;
 pub enum Event {
     PreferencesChanged,
     TeamsChanged,
+    TippersChanged,
+    RoundsChanged,
 }
 
 static MANAGER: LazyLock<EventManager> = LazyLock::new(|| EventManager {

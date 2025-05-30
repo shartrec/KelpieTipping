@@ -22,17 +22,38 @@
  *
  */
 
-use std::ffi::CStr;
-use adw::AlertDialog;
-use gtk::{AboutDialog, glib, Label, ListItem, Root, ScrolledWindow, SignalListItemFactory, TreeExpander, TreeListRow, TreeListModel};
-use gtk::gdk::Texture;
-use gtk::glib::Object;
-use adw::prelude::{AdwDialogExt, AlertDialogExt, Cast, CastNone, EditableExt, EditableExtManual, GtkWindowExt, IsA, ListItemExt, WidgetExt};
-use gettextrs::gettext;
 use crate::util;
 use crate::window::Window;
+use adw::gdk::{Key, ModifierType};
+use adw::glib;
+use adw::glib::{clone, Propagation};
+use adw::prelude::{AdwDialogExt, AlertDialogExt, Cast, CastNone, EditableExt, GtkWindowExt, IsA, ListItemExt, WidgetExt};
+use adw::AlertDialog;
+use gettextrs::gettext;
+use gtk::gdk::Texture;
+use gtk::glib::Object;
+use gtk::prelude::ButtonExt;
+use gtk::{AboutDialog, Button, Entry, Label, ListItem, Root, SignalListItemFactory, Widget};
 
-pub fn show_error_dialog(root: &Option<Root>, message: &str) {
+pub(crate) fn connect_escape<W: IsA<Widget> + adw::glib::clone::Downgrade>(widget: &W, button: &Button) {
+    // Create the key controller
+    let ev_key = gtk::EventControllerKey::new();
+    ev_key.connect_key_pressed(
+        clone!(#[weak] button,
+            #[upgrade_or] Propagation::Proceed,
+            move | _event, key_val, _key_code, modifier | {
+                if key_val == Key::Escape && modifier == ModifierType::empty() {
+                    button.emit_clicked();
+                    Propagation::Stop
+                } else {
+                    Propagation::Proceed
+                }
+
+            }));
+    widget.add_controller(ev_key);
+}
+
+pub(crate) fn show_error_dialog(root: &Option<Root>, message: &str) {
     // Create a new message dialog
     if let Ok(w) = root
         .as_ref()
@@ -50,14 +71,14 @@ pub fn show_error_dialog(root: &Option<Root>, message: &str) {
 pub(crate) fn build_column_factory<F: Fn(Label, &T) + 'static, T: IsA<Object>>(f: F) -> SignalListItemFactory {
     let factory = SignalListItemFactory::new();
     factory.connect_setup(move |_, list_item| {
-        let label = Label::new(None);
+        let label = Label::new(Some("(none)"));
         list_item
             .downcast_ref::<ListItem>()
             .expect("Needs to be ListItem")
             .set_child(Some(&label));
     });
 
-    factory.connect_bind(move |_, list_item| {
+    factory.connect_bind(move |_f, list_item| {
         // Get `StringObject` from `ListItem`
         let obj = list_item
             .downcast_ref::<ListItem>()
@@ -79,52 +100,6 @@ pub(crate) fn build_column_factory<F: Fn(Label, &T) + 'static, T: IsA<Object>>(f
     });
     factory
 }
-
-pub(crate) fn build_tree_column_factory(f: fn(Label, &TreeListRow)) -> SignalListItemFactory {
-    let factory = SignalListItemFactory::new();
-    factory.connect_setup(move |_, list_item| {
-        let label = Label::new(None);
-        let expander = TreeExpander::new();
-        expander.set_child(Some(&label));
-        expander.set_indent_for_icon(true);
-        expander.set_indent_for_depth(true);
-        let list_item = list_item
-            .downcast_ref::<ListItem>()
-            .expect("Needs to be ListItem");
-        list_item.set_child(Some(&expander));
-        list_item.set_focusable(false);
-    });
-
-    factory.connect_bind(move |_factory, list_item| {
-        // Get `StringObject` from `ListItem`
-        let obj = list_item
-            .downcast_ref::<ListItem>()
-            .expect("Needs to be ListItem")
-            .item()
-            .and_downcast::<TreeListRow>()
-            .expect("The item has to be an <T>.");
-
-        // Get `Label` from `ListItem`
-        if let Some(widget) = list_item
-            .downcast_ref::<ListItem>()
-            .expect("Needs to be ListItem")
-            .child() {
-            let expander = widget.downcast::<TreeExpander>()
-                .expect("The child has to be a `Expander`.");
-
-            let widget = expander.child()
-                .expect("The child has to be a `Widget`.");
-            let label = widget.downcast::<Label>()
-                .expect("The child has to be a `Label`.");
-            // Set "label" to "value"
-            f(label, &obj);
-
-            expander.set_list_row(Some(&obj));
-        }
-    });
-    factory
-}
-
 
 pub(crate) fn show_help_about(window: &Window) {
     let icon = Texture::from_resource(
@@ -148,5 +123,21 @@ pub(crate) fn show_help_about(window: &Window) {
     about_dialog.set_visible(true);
 }
 
+fn validate_numeric(entry: &Entry, name: &str) -> bool {
+    match entry.text().as_str().parse::<i32>() {
+        Ok(_) => { true }
+        Err(_) => {
+            show_error_dialog(&entry.root(), format!("{} should be numeric", name).as_str());
+            false
+        }
+    }
+}
 
-
+pub fn validate_not_empty(entry: &Entry, name: &str) -> bool {
+    if entry.text().as_str().is_empty() {
+        show_error_dialog(&entry.root(), format!("{} is required", name).as_str());
+        false
+    } else {
+        true
+    }
+}

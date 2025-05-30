@@ -23,14 +23,14 @@
   -->
 
 <interface>
-  <template class="TeamDialog" parent="GtkWindow">
-    <property name="title" translatable="yes">Add Team</property>
+  <template class="TipperDialog" parent="GtkWindow">
+    <property name="title" translatable="yes">Add Tipper</property>
     <property name="default-height">200</property>
     <property name="default-width">450</property>
     <property name="default-widget">btn_ok</property>
 
     <child>
-      <object class="GtkBox" id="team_view">
+      <object class="GtkBox" id="tipper_view">
         <property name="orientation">vertical</property>
         <property name="hexpand">true</property>
         <property name="vexpand">true</property>
@@ -59,7 +59,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkEntry" id="team_name">
+              <object class="GtkEntry" id="tipper_name">
                 <property name="hexpand">true</property>
                 <property name="width-request">200</property>
                 <property name="activates-default">true</property>
@@ -71,7 +71,7 @@
             </child>
             <child>
               <object class="GtkLabel">
-                <property name="label" translatable="yes">Nickname</property>
+                <property name="label" translatable="yes">Email</property>
                 <property name="halign">end</property>
                 <layout>
                   <property name="column">0</property>
@@ -80,9 +80,8 @@
               </object>
             </child>
             <child>
-              <object class="GtkEntry" id="team_nickname">
+              <object class="GtkEntry" id="tipper_email">
                 <property name="width-request">50</property>
-                <property name="max-length">10</property>
                 <property name="activates-default">true</property>
                 <layout>
                   <property name="column">1</property>

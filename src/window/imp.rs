@@ -23,24 +23,14 @@
  */
 #![forbid(unsafe_code)]
 
-use adw::{TabPage, TabView};
-use adw::subclass::prelude::AdwApplicationWindowImpl;
-use async_std::task;
-use glib::Propagation;
-use glib::subclass::InitializingObject;
-use gtk::{AlertDialog, CompositeTemplate, FileDialog, glib, Label, Notebook, Paned};
-use gtk::gio::{Cancellable, File};
-use gtk::glib::{clone, MainContext};
-use adw::prelude::*;
-use adw::subclass::prelude::*;
-use gettextrs::gettext;
+use crate::window::round_view::RoundView;
 use crate::window::team_view::TeamView;
-
-enum SaveType {
-    Native,
-    FgRouteManager,
-}
-
+use crate::window::tipper_view::TipperView;
+use adw::subclass::prelude::AdwApplicationWindowImpl;
+use adw::subclass::prelude::*;
+use glib::subclass::InitializingObject;
+use glib::Propagation;
+use gtk::{glib, CompositeTemplate};
 
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
@@ -48,6 +38,10 @@ enum SaveType {
 pub struct Window {
     #[template_child]
     pub team_view: TemplateChild<TeamView>,
+    #[template_child]
+    pub tipper_view: TemplateChild<TipperView>,
+    #[template_child]
+    pub round_view: TemplateChild<RoundView>,
 
 }
 

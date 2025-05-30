@@ -22,11 +22,6 @@
  *
  */
 
-use std::process::Command;
-use std::env;
-use std::fs;
-use std::path::{Path, PathBuf};
-
 fn main() {
     glib_build_tools::compile_resources(
         &["resources"],

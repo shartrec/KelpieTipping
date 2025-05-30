@@ -1,0 +1,72 @@
+<!--
+  ~ Copyright (c) 2025-2025. Trevor Campbell and others.
+  ~
+  ~ This file is part of KelpieTipping.
+  ~
+  ~ KelpieTipping is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation; either version 2 of the License,or
+  ~ (at your option) any later version.
+  ~
+  ~ KelpieTipping is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with KelpieTipping; if not, write to the Free Software
+  ~ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  ~
+  ~ Contributors:
+  ~      Trevor Campbell
+  ~
+  -->
+
+<interface>
+  <template class="RoundView" parent="GtkBox">
+    <child>
+      <object class="GtkPaned" id="pane_1v">
+        <property name="visible">True</property>
+        <property name="can-focus">True</property>
+        <property name="orientation">horizontal</property>
+        <property name="position">100</property>
+        <property name="vexpand">true</property>
+
+        <child>
+          <object class="GtkScrolledWindow" id="rounds">
+            <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+            <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkListView" id="round_list">
+                <property name="vexpand">true</property>
+                <property name="hexpand">true</property>
+                <style>
+                  <class name="boxed-list"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="round_draw">
+            <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+            <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkGrid">
+                <property name="vexpand">true</property>
+                <property name="hexpand">true</property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+      </object>
+    </child>
+  </template>
+</interface>

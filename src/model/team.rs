@@ -33,16 +33,16 @@ glib::wrapper! {
 }
 
 impl Team {
-    pub fn new(team_id: i32, name: String, nickname: String) -> Team
+    pub fn new(team_id: Option<i32>, name: String, nickname: String) -> Team
     {
-        let mut obj: Team = glib::Object::new();
+        let obj: Team = glib::Object::new();
         obj.imp().set_id(team_id);
         obj.imp().set_name(name);
         obj.imp().set_nickname(nickname);
         obj
     }
 
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> Option<i32> {
         self.imp().team_id.borrow().clone()
     }
     pub fn name(&self) -> String {
@@ -51,7 +51,7 @@ impl Team {
     pub fn nickname(&self) -> String {
         self.imp().nickname.borrow().clone()
     }
-    pub fn set_id(&self, id: i32) {
+    pub fn set_id(&self, id: Option<i32>) {
         self.imp().set_id(id);
     }
     pub fn set_name(&self, name: String) {
@@ -76,26 +76,23 @@ mod imp {
     use crate::model::team::get_all;
     use crate::util::db;
     use adw::gio;
-    use adw::glib::{clone, MainContext, Object};
+    use adw::glib::{clone, Object};
     use adw::prelude::StaticType;
-    use adw::subclass::prelude::{ListModelImpl, ObjectImpl, ObjectImplExt, ObjectSubclass, ObjectSubclassExt, ObjectSubclassIsExt};
+    use adw::subclass::prelude::{ListModelImpl, ObjectImpl, ObjectImplExt, ObjectSubclass};
     use gtk::glib;
     use log::error;
-    use sqlx::{PgPool, Row};
-    use std::cell::{Cell, RefCell};
-    use std::collections::BTreeMap;
-    use std::ops::Deref;
+    use std::cell::RefCell;
     use std::sync::{Arc, RwLock};
 
     #[derive(Default)]
     pub struct Team {
-        pub(super) team_id: RefCell<i32>,
+        pub(super) team_id: RefCell<Option<i32>>,
         pub(super) name: RefCell<String>,
         pub(super) nickname: RefCell<String>,
     }
 
     impl Team {
-        pub(super) fn set_id(&self, id: i32) {
+        pub(super) fn set_id(&self, id: Option<i32>) {
             self.team_id.replace(id);
         }
 
@@ -136,8 +133,13 @@ mod imp {
             map.iter().nth(position as usize).as_deref().map(|t| t.clone())
         }
 
+        pub fn add_team(&self, team: crate::model::team::Team) {
+            let mut binding = self.teams.write().expect("Can't get lock on teams cache");
+            binding.insert(0, team);
+        }
     }
-    /// Basic declaration of our type for the GObject type system
+
+    // Basic declaration of our type for the GObject type system
     #[glib::object_subclass]
     impl ObjectSubclass for Teams {
         const NAME: &'static str = "Teams";
@@ -197,7 +199,7 @@ pub async fn insert(pool: &PgPool, name: String, nickname: String) -> Result<cra
     match result {
         Ok(row) => {
             let id = row.get::<i32, _>(0);
-            Ok(crate::model::team::Team::new(id, name, nickname))
+            Ok(crate::model::team::Team::new(Some(id), name, nickname))
         },
         Err(e) => {
             error!("Error inserting team: {}", e);
@@ -252,7 +254,7 @@ pub async fn get(pool: &PgPool, id: i32) -> Result<Option<crate::model::team::Te
                     let team_id = row.get::<i32, _>(0);
                     let name = row.get::<String, _>(1);
                     let nickname = row.get::<String, _>(2);
-                    Ok(Some(Team::new(team_id, name, nickname)))
+                    Ok(Some(Team::new(Some(team_id), name, nickname)))
                 },
                 None => {
                     Ok(None)
@@ -278,7 +280,7 @@ pub async fn get_all(pool: &PgPool) -> Result<Vec<crate::model::team::Team>, Str
                 let team_id = row.get::<i32, _>(0);
                 let name = row.get::<String, _>(1);
                 let nickname = row.get::<String, _>(2);
-                teams.push(Team::new(team_id, name, nickname));
+                teams.push(Team::new(Some(team_id), name, nickname));
             }
             Ok(teams)
         },

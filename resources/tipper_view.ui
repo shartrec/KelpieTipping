@@ -23,7 +23,7 @@
   -->
 
 <interface>
-  <template class="TeamView" parent="GtkBox">
+  <template class="TipperView" parent="GtkBox">
     <property name="layout-manager">
       <object class="GtkBoxLayout">
         <property name="orientation">vertical</property>
@@ -32,14 +32,14 @@
     <property name="vexpand">true</property>
     <property name="hexpand">true</property>
     <child>
-      <object class="GtkScrolledWindow" id="team_page">
+      <object class="GtkScrolledWindow" id="tipper_page">
         <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
         <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
         <property name="propagate-natural-width">true</property>
         <property name="vexpand">true</property>
         <property name="hexpand">true</property>
         <child>
-          <object class="GtkColumnView" id="team_list">
+          <object class="GtkColumnView" id="tipper_list">
             <property name="vexpand">true</property>
             <property name="hexpand">true</property>
             <style>
@@ -51,8 +51,8 @@
               </object>
             </child>
             <child>
-              <object class="GtkColumnViewColumn" id="col_nickname">
-                <property name="title" translatable="yes">Nickname</property>
+              <object class="GtkColumnViewColumn" id="col_email">
+                <property name="title" translatable="yes">Email</property>
                 <property name="expand">true</property>
               </object>
             </child>

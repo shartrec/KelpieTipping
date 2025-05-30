@@ -16,7 +16,7 @@ log = "0.4"
 preferences = "2.0.0"
 rolling-file = "0.2.0"
 simplelog = "0.12.2"
-sqlx = { version = "0.8.5", features = ["runtime-async-std", "postgres"] }
+sqlx = { version = "0.8.5", features = ["runtime-async-std", "postgres", "chrono"] }
 
 [profile.release]
 opt-level = 3

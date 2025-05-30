@@ -31,24 +31,24 @@ pub(crate) mod model;
 pub(crate) mod preference;
 pub(crate) mod event;
 
-use adw::Application;
-use gtk::{gio, glib, CssProvider, UriLauncher};
+use crate::util::{db, info};
+use crate::window::edit_round::RoundDialog;
+use crate::window::edit_team::TeamDialog;
+use crate::window::edit_tipper::TipperDialog;
+use crate::window::util::show_help_about;
+use crate::window::Window;
 use adw::gdk::Display;
-use gtk::gio::{Cancellable, File, SimpleAction};
-use gtk::glib::clone;
 use adw::prelude::*;
-use adw::subclass::prelude::{ObjectSubclass, ObjectSubclassIsExt};
+use adw::Application;
 use async_std::task;
-use log::{error, warn};
-use util::Logger;
 // use window::Window;
 use gettextrs::{TextDomain, TextDomainError};
-use sqlx::{PgPool, Pool, Postgres};
-use crate::preference::PreferenceManager;
-use crate::util::{db, info};
-use crate::window::Window;
-use crate::window::edit_team::TeamDialog;
-use crate::window::util::show_help_about;
+use gtk::gio::{Cancellable, SimpleAction};
+use gtk::glib::clone;
+use gtk::{gio, glib, CssProvider, UriLauncher};
+use log::{error, warn};
+use sqlx::{Pool, Postgres};
+use util::Logger;
 
 const APP_ID: &str = "com.shartrec.KelpieTipping";
 
@@ -161,6 +161,22 @@ fn connect_actions(app: &Application, window: &Window) {
     }));
     app.add_action(&action);
 
+    let action = SimpleAction::new("new-tipper", None);
+    action.connect_activate(clone!(#[weak] window, move |_action, _parameter| {
+        let tipper_dialog = TipperDialog::new();
+        tipper_dialog.set_transient_for(Some(&window));
+        tipper_dialog.set_visible(true);
+    }));
+    app.add_action(&action);
+
+    let action = SimpleAction::new("new-round", None);
+    action.connect_activate(clone!(#[weak] window, move |_action, _parameter| {
+        let round_dialog = RoundDialog::new(None);
+        round_dialog.set_transient_for(Some(&window));
+        round_dialog.set_visible(true);
+    }));
+    app.add_action(&action);
+
     let action = SimpleAction::new("quit", None);
     action.connect_activate(clone!(#[weak] app, move |_action, _parameter| {
         app.quit()
@@ -181,6 +197,8 @@ fn connect_actions(app: &Application, window: &Window) {
             .launch(Some(&window), Some(&Cancellable::default()), |_| {});
     }));
     app.add_action(&action);
+
+    app.set_accels_for_action("app.help-contents", &["F1"]);
 }
 
 fn build_ui(app: &Application) {

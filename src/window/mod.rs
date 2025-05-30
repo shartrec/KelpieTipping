@@ -21,8 +21,8 @@
  *      Trevor Campbell
  *
  */
-use adw::Application;
 use adw::prelude::GtkWindowExt;
+use adw::Application;
 use glib::Object;
 use gtk::{gio, glib};
 
@@ -30,6 +30,10 @@ pub(crate) mod imp;
 pub(crate) mod util;
 pub(crate) mod team_view;
 pub(crate) mod edit_team;
+pub(crate) mod tipper_view;
+pub(crate) mod edit_tipper;
+pub (crate) mod round_view;
+pub(crate) mod edit_round;
 
 glib::wrapper! {
     pub struct Window(ObjectSubclass<imp::Window>)
@@ -50,32 +54,30 @@ impl Window {
         let size = self.default_size();
 
         // Set the window state in `settings`
-        // todo
-        // let pref = crate::preference::manager();
-        // pref.put("window-width", size.0);
-        // pref.put("window-height", size.1);
-        // pref.put("window-is-maximized", self.is_maximized());
+        let pref = crate::preference::manager();
+        pref.put("window-width", size.0);
+        pref.put("window-height", size.1);
+        pref.put("window-is-maximized", self.is_maximized());
 
         Ok(())
     }
 
     fn load_window_size(&self) {
-//todo
-        // // Get the window state from `settings`
-        // let pref = crate::preference::manager();
-        //
-        // // Set the size of the window
-        // if let Some(w) = pref.get::<i32>("window-width") {
-        //     if let Some(h) = pref.get::<i32>("window-height") {
-        //         self.set_default_size(w, h);
-        //     }
-        // }
-        //
-        // // If the window was maximized when it was closed, maximize it again
-        // if let Some(is_maximised) = pref.get::<bool>("is-maximized") {
-        //     if is_maximised {
-        //         self.maximize();
-        //     }
-        // }
+        // Get the window state from `settings`
+        let pref = crate::preference::manager();
+
+        // Set the size of the window
+        if let Some(w) = pref.get::<i32>("window-width") {
+            if let Some(h) = pref.get::<i32>("window-height") {
+                self.set_default_size(w, h);
+            }
+        }
+
+        // If the window was maximized when it was closed, maximize it again
+        if let Some(is_maximised) = pref.get::<bool>("is-maximized") {
+            if is_maximised {
+                self.maximize();
+            }
+        }
     }
 }

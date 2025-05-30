@@ -3,11 +3,11 @@ use gtk::{gio, glib};
 mod imp {
     use crate::event;
     use crate::event::Event;
-    use crate::model::team;
-    use crate::model::team::Team;
+    use crate::model::tipper;
+    use crate::model::tipper::Tipper;
     use crate::util::db;
     use crate::window::util::{connect_escape, validate_not_empty};
-    use adw::prelude::{ButtonExt, EditableExt, GtkWindowExt};
+    use adw::prelude::{ButtonExt, GtkWindowExt};
     use adw::subclass::prelude::{CompositeTemplate, ObjectImpl, ObjectImplExt, ObjectSubclass, ObjectSubclassExt, WidgetClassExt, WindowImpl};
     use gtk::glib::clone;
     use gtk::glib::subclass::InitializingObject;
@@ -16,48 +16,49 @@ mod imp {
     use log::info;
     use std::cell::RefCell;
     use std::ops::Deref;
+    use gtk::prelude::EditableExt;
 
     #[derive(CompositeTemplate, Default)]
-    #[template(resource = "/com/shartrec/kelpie_tipping/team_dialog.ui")]
-    pub struct TeamDialog {
+    #[template(resource = "/com/shartrec/kelpie_tipping/tipper_dialog.ui")]
+    pub struct TipperDialog {
         #[template_child]
-        pub team_view: TemplateChild<gtk::Box>,
+        pub tipper_view: TemplateChild<gtk::Box>,
         #[template_child]
-        pub team_name: TemplateChild<Entry>,
+        pub tipper_name: TemplateChild<Entry>,
         #[template_child]
-        pub team_nickname: TemplateChild<Entry>,
+        pub tipper_email: TemplateChild<Entry>,
         #[template_child]
         pub btn_ok: TemplateChild<Button>,
         #[template_child]
         pub btn_cancel: TemplateChild<Button>,
 
-        team_id: RefCell<Option<i32>>,
+        tipper_id: RefCell<Option<i32>>,
     }
 
-    impl TeamDialog {
-        pub fn set_team(&self, team: Option<Team>) {
-            match team {
-                Some(team) => {
-                    self.team_id.replace(team.id());
-                    self.team_name.set_text(&team.name());
-                    self.team_nickname.set_text(&team.nickname());
+    impl TipperDialog {
+        pub fn set_tipper(&self, tipper: Option<Tipper>) {
+            match tipper {
+                Some(tipper) => {
+                    self.tipper_id.replace(Some(tipper.id()));
+                    self.tipper_name.set_text(&tipper.name());
+                    self.tipper_email.set_text(&tipper.email());
                 }
                 None => {
-                    self.team_id.replace(None);
-                    self.team_name.set_text("");
-                    self.team_nickname.set_text("");
+                    self.tipper_id.replace(None);
+                    self.tipper_name.set_text("");
+                    self.tipper_email.set_text("");
                 }
             }
         }
 
         fn validate(&self) -> bool {
-            validate_not_empty(&self.team_name, "Name") &&
-            validate_not_empty(&self.team_nickname, "Nickname")
+            validate_not_empty(&self.tipper_name, "Name") &&
+                validate_not_empty(&self.tipper_email, "Email")
         }
 
-        fn save_team(&self) -> bool {
+        fn save_tipper(&self) -> bool {
             // Check we have a name
-            if self.team_name.text().is_empty() {
+            if self.tipper_name.text().is_empty() {
                 let buttons = vec!["Ok".to_string()];
                 let alert = AlertDialog::builder()
                     .message("Please enter a name")
@@ -65,7 +66,7 @@ mod imp {
                     .build();
                 alert.show(Some(&self.obj().clone()));
                 false
-            } else if self.team_nickname.text().is_empty() {
+            } else if self.tipper_email.text().is_empty() {
                 let buttons = vec!["Ok".to_string()];
                 let alert = AlertDialog::builder()
                     .message("Please enter a nick name")
@@ -75,35 +76,35 @@ mod imp {
                 false
             } else {
                 let pool = db::manager().pool();
-                if self.team_id.borrow().is_some() {
-                    // Update the team
-                    let id = self.team_id.borrow().unwrap();
-                    let name = self.team_name.text().to_string().clone();
-                    let nickname = self.team_nickname.text().to_string().clone();
+                if self.tipper_id.borrow().is_some() {
+                    // Update the tipper
+                    let id = self.tipper_id.borrow().unwrap();
+                    let name = self.tipper_name.text().to_string().clone();
+                    let email = self.tipper_email.text().to_string().clone();
                     glib::spawn_future_local(clone!( async move {
-                        info!("Updating team {}", id);
-                        let _ = team::update(pool, id, name, nickname).await;
-                        event::manager().notify_listeners(Event::TeamsChanged);
+                        info!("Updating tipper {}", id);
+                        let _ = tipper::update(pool, id, name, email).await;
+                        event::manager().notify_listeners(Event::TippersChanged);
                     }));
-
                 } else {
-                    // Create a new team
-                    let name = self.team_name.text().to_string().clone();
-                    let nickname = self.team_nickname.text().to_string().clone();
+                    // Create a new tipper
+                    let name = self.tipper_name.text().to_string().clone();
+                    let email = self.tipper_email.text().to_string().clone();
                     glib::spawn_future_local(clone!( async move {
-                        let _ = team::insert(pool, name, nickname).await;
-                        event::manager().notify_listeners(Event::TeamsChanged);
+                        let _ = tipper::insert(pool, name, email).await;
+                        event::manager().notify_listeners(Event::TippersChanged);
                     }));
                 }
                 true
             }
         }
+
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for TeamDialog {
-        const NAME: &'static str = "TeamDialog";
-        type Type = super::TeamDialog;
+    impl ObjectSubclass for TipperDialog {
+        const NAME: &'static str = "TipperDialog";
+        type Type = super::TipperDialog;
         type ParentType = gtk::Window;
 
         fn class_init(klass: &mut Self::Class) {
@@ -116,7 +117,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for TeamDialog {
+    impl ObjectImpl for TipperDialog {
         fn constructed(&self) {
             self.parent_constructed();
 
@@ -125,36 +126,34 @@ mod imp {
             }));
 
             self.btn_ok.connect_clicked(clone!(#[weak(rename_to = window)] self, move |_button| {
-                if window.validate() && window.save_team() {
+                if window.validate() && window.save_tipper() {
                     window.obj().close();
                 }
             }));
 
-
-            connect_escape(self.team_view.deref(), self.btn_cancel.deref());
-
+            connect_escape(self.tipper_view.deref(), self.btn_cancel.deref());
         }
     }
 
-    impl WidgetImpl for TeamDialog {}
+    impl WidgetImpl for TipperDialog {}
 
-    impl WindowImpl for TeamDialog {}
+    impl WindowImpl for TipperDialog {}
 }
 
 glib::wrapper! {
-    pub struct TeamDialog(ObjectSubclass<imp::TeamDialog>)
+    pub struct TipperDialog(ObjectSubclass<imp::TipperDialog>)
         @extends gtk::Window, gtk::Widget,
         @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable,
                     gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
 
-impl TeamDialog {
+impl TipperDialog {
     pub fn new() -> Self {
-        glib::Object::new::<TeamDialog>()
+        glib::Object::new::<TipperDialog>()
     }
 }
 
-impl Default for TeamDialog {
+impl Default for TipperDialog {
     fn default() -> Self {
         Self::new()
     }

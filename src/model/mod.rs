@@ -22,7 +22,7 @@
  *
  */
 pub(crate) mod team;
-mod round;
-mod game;
-mod tipper;
+pub(crate) mod round;
+pub(crate) mod game;
+pub(crate) mod tipper;
 mod tip;

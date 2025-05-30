@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2025. Trevor Campbell and others.
  *
- * This file is part of Kelpie Tipping.
+ * This file is part of KelpieTipping.
  *
- * Kelpie Tipping is free software; you can redistribute it and/or modify
+ * KelpieTipping is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 2 of the License,or
  * (at your option) any later version.
  *
- * Kelpie Tipping is distributed in the hope that it will be useful,
+ * KelpieTipping is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Kelpie Tipping; if not, write to the Free Software
+ * along with KelpieTipping; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Contributors:
@@ -29,34 +29,34 @@ mod imp {
     use super::*;
     use crate::event;
     use crate::event::Event;
-    use crate::model::team;
-    use crate::model::team::{Team, Teams};
+    use crate::model::tipper;
+    use crate::model::tipper::{Tipper, Tippers};
     use crate::util::db;
-    use crate::window::edit_team::TeamDialog;
+    use crate::window::edit_tipper::TipperDialog;
     use crate::window::util::build_column_factory;
     use adw::glib::clone;
     use glib::subclass::InitializingObject;
     use gtk::{Button, ColumnView, ColumnViewColumn, Label, ListItem, SignalListItemFactory, SingleSelection};
 
     #[derive(Default, CompositeTemplate)]
-    #[template(resource = "/com/shartrec/kelpie_tipping/team_view.ui")]
-    pub struct TeamView {
+    #[template(resource = "/com/shartrec/kelpie_tipping/tipper_view.ui")]
+    pub struct TipperView {
         #[template_child]
-        pub team_list: TemplateChild<ColumnView>,
+        pub tipper_list: TemplateChild<ColumnView>,
         #[template_child]
         pub col_name: TemplateChild<ColumnViewColumn>,
         #[template_child]
-        pub col_nickname: TemplateChild<ColumnViewColumn>,
+        pub col_email: TemplateChild<ColumnViewColumn>,
         #[template_child]
         pub col_delete: TemplateChild<ColumnViewColumn>,
     }
 
-    impl TeamView {
+    impl TipperView {
         pub fn initialise(&self) {
             if let Some(rx) = event::manager().register_listener() {
                 glib::spawn_future_local(clone!(#[weak(rename_to = view)] self, async move {
                     while let Ok(ev) = rx.recv().await {
-                        if let Event::TeamsChanged = ev {
+                        if let Event::TippersChanged = ev {
                             view.refresh();
                         }
                     }
@@ -66,15 +66,15 @@ mod imp {
         }
 
         fn refresh(&self) {
-            let selection_model = SingleSelection::new(Some(Teams::new()));
-            self.team_list.set_model(Some(&selection_model));
-            self.team_list.queue_draw();
+            let selection_model = SingleSelection::new(Some(Tippers::new()));
+            self.tipper_list.set_model(Some(&selection_model));
+            self.tipper_list.queue_draw();
         }
 
-        fn get_model_team(&self, sel_ap: u32) -> Option<Team> {
-            let selection = self.team_list.model().unwrap().item(sel_ap);
+        fn get_model_tipper(&self, sel_ap: u32) -> Option<Tipper> {
+            let selection = self.tipper_list.model().unwrap().item(sel_ap);
             if let Some(object) = selection {
-                object.downcast::<Team>().ok()
+                object.downcast::<Tipper>().ok()
             } else {
                 None
             }
@@ -83,9 +83,9 @@ mod imp {
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for TeamView {
-        const NAME: &'static str = "TeamView";
-        type Type = super::TeamView;
+    impl ObjectSubclass for TipperView {
+        const NAME: &'static str = "TipperView";
+        type Type = super::TipperView;
         type ParentType = gtk::Box;
 
         fn class_init(klass: &mut Self::Class) {
@@ -98,12 +98,12 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for TeamView {
+    impl ObjectImpl for TipperView {
         fn constructed(&self) {
             self.parent_constructed();
             self.initialise();
 
-            self.team_list.connect_activate(
+            self.tipper_list.connect_activate(
                 clone!(#[weak(rename_to = view)] self, move | _list_view, position | {
                     if let Ok(w) = view.obj().root()
                         .as_ref()
@@ -111,23 +111,23 @@ mod imp {
                         .clone()
                         .downcast::<gtk::Window>() {
 
-                        if let Some(team) = view.get_model_team(position) {
-                            let team_dialog = TeamDialog::new();
-                            team_dialog.imp().set_team(Some(team));
-                            team_dialog.set_transient_for(Some(&w));
-                            team_dialog.set_visible(true);
+                        if let Some(tipper) = view.get_model_tipper(position) {
+                            let tipper_dialog = TipperDialog::new();
+                            tipper_dialog.imp().set_tipper(Some(tipper));
+                            tipper_dialog.set_transient_for(Some(&w));
+                            tipper_dialog.set_visible(true);
                         }
                     }
                 }),
             );
 
-            self.col_name.set_factory(Some(&build_column_factory(|label: Label, team: &Team| {
-                label.set_label(team.name().as_str());
+            self.col_name.set_factory(Some(&build_column_factory(|label: Label, tipper: &Tipper| {
+                label.set_label(tipper.name().as_str());
                 label.set_xalign(0.0);
             })));
 
-            self.col_nickname.set_factory(Some(&build_column_factory(|label: Label, team: &Team| {
-                label.set_label(team.nickname().as_str());
+            self.col_email.set_factory(Some(&build_column_factory(|label: Label, tipper: &Tipper| {
+                label.set_label(tipper.email().as_str());
                 label.set_xalign(0.0);
             })));
 
@@ -137,20 +137,20 @@ mod imp {
                     let button = Button::new();
                     button.set_icon_name("edit-delete");
 
-                    button.connect_clicked(delete_team);
+                    button.connect_clicked(delete_tipper);
                     list_item
                         .downcast_ref::<ListItem>()
                         .expect("Needs to be ListItem")
                         .set_child(Some(&button));
                 });
 
-                factory.connect_bind(move |_f, list_item| {
+                factory.connect_bind(move |_, list_item| {
                     // Get `StringObject` from `ListItem`
                     let obj = list_item
                         .downcast_ref::<ListItem>()
                         .expect("Needs to be ListItem")
                         .item()
-                        .and_downcast::<Team>()
+                        .and_downcast::<Tipper>()
                         .expect("The item has to be an <T>.");
 
                     // Get `Label` from `ListItem`
@@ -170,17 +170,17 @@ mod imp {
         }
     }
 
-    impl BoxImpl for TeamView {}
+    impl BoxImpl for TipperView {}
 
-    impl WidgetImpl for TeamView {}
+    impl WidgetImpl for TipperView {}
 
-    fn delete_team(button: &Button) {
+    fn delete_tipper(button: &Button) {
         if let Some(value) = button.action_target_value() {
             if let Some(id) = value.get::<i32>() {
                 let pool = db::manager().pool();
                 glib::spawn_future_local(clone!(async move {
-                let _ = team::delete(pool, id).await;
-                event::manager().notify_listeners(Event::TeamsChanged);
+                let _ = tipper::delete(pool, id).await;
+                event::manager().notify_listeners(Event::TippersChanged);
             }));
             }
         }
@@ -188,17 +188,17 @@ mod imp {
 }
 
 glib::wrapper! {
-    pub struct TeamView(ObjectSubclass<imp::TeamView>)
+    pub struct TipperView(ObjectSubclass<imp::TipperView>)
         @extends gtk::Widget, gtk::Box;
 }
 
-impl TeamView {
+impl TipperView {
     pub fn new() -> Self {
-        glib::Object::new::<TeamView>()
+        glib::Object::new::<TipperView>()
     }
 }
 
-impl Default for TeamView {
+impl Default for TipperView {
     fn default() -> Self {
         Self::new()
     }

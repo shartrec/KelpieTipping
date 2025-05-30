@@ -37,13 +37,13 @@ CREATE TABLE IF NOT EXISTS rounds (
     end_date DATE NOT NULL
 );
 
--- Table to store matches
+-- Table to store games
 CREATE TABLE IF NOT EXISTS games (
-    match_id SERIAL PRIMARY KEY,
+    game_id SERIAL PRIMARY KEY,
     round_id INT NOT NULL REFERENCES rounds(round_id),
     home_team_id INT NOT NULL REFERENCES teams(team_id),
     away_team_id INT NOT NULL REFERENCES teams(team_id),
-    match_date TIMESTAMP NOT NULL,
+    game_date DATE NOT NULL,
     home_team_score INT,
     away_team_score INT
 );
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS tippers (
 CREATE TABLE IF NOT EXISTS tips (
     tip_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES tippers(tipper_id),
-    match_id INT NOT NULL REFERENCES games(match_id),
+    game_id INT NOT NULL REFERENCES games(game_id),
     predicted_home_score INT NOT NULL,
     predicted_away_score INT NOT NULL,
     tip_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP

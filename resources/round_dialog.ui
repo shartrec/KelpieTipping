@@ -1,0 +1,229 @@
+<!--
+  ~ Copyright (c) 2025. Trevor Campbell and others.
+  ~
+  ~ This file is part of KelpieTipping.
+  ~
+  ~ KelpieTipping is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation; either version 2 of the License,or
+  ~ (at your option) any later version.
+  ~
+  ~ KelpieTipping is distributed in the hope that it will be useful, 
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License 
+  ~ along with KelpieTipping; if not, write to the Free Software 
+  ~ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  ~
+  ~ Contributors:
+  ~      Trevor Campbell
+  ~
+  -->
+
+<interface>
+  <template class="RoundDialog" parent="GtkWindow">
+    <property name="title" translatable="yes">Add Round</property>
+    <property name="default-height">600</property>
+    <property name="default-width">550</property>
+    <property name="default-widget">btn_ok</property>
+
+    <child>
+      <object class="GtkBox" id="round_view">
+        <property name="orientation">vertical</property>
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <property name="margin-start">5</property>
+        <property name="margin-end">5</property>
+        <property name="margin-top">5</property>
+        <property name="margin-bottom">5</property>
+
+        <child>
+          <object class="GtkGrid">
+            <!--            <property name="vexpand">true</property>-->
+            <!--            <property name="hexpand">true</property>-->
+            <property name="row-spacing">8</property>
+            <property name="column-spacing">5</property>
+            <property name="margin-bottom">5</property>
+            <style>
+              <class name="preference-page"/>
+            </style>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Round Number</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="round_number">
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">1</property> <!-- Minimum value -->
+                    <property name="upper">50</property> <!-- Maximum value -->
+                    <property name="step-increment">1</property> <!-- Step increment -->
+                    <property name="page-increment">10</property> <!-- Page increment -->
+                    <property name="value">1</property> <!-- Default value -->
+                  </object>
+                </property>
+                <property name="hexpand">false</property>
+                <property name="activates-default">true</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Start Date</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">5</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">1</property>
+                </layout>
+                <child>
+                  <object class="GtkEntry" id="start_date">
+                    <property name="width-request">15</property>
+                    <property name="secondary-icon-name">pan-down-symbolic</property>
+                    <property name="placeholder-text" translatable="yes">YYYY-MM-DD</property>
+                    <property name="activates-default">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkPopover" id="start_date_popover">
+                    <child>
+                      <object class="GtkCalendar" id="start_date_calendar"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">End Date</property>
+                <property name="halign">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">2</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">5</property>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">2</property>
+                </layout>
+                <child>
+                  <object class="GtkEntry" id="end_date">
+                    <property name="width-request">15</property>
+                    <property name="secondary-icon-name">pan-down-symbolic</property>
+                    <property name="placeholder-text" translatable="yes">YYYY-MM-DD</property>
+                    <property name="activates-default">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkPopover" id="end_date_popover">
+                    <child>
+                      <object class="GtkCalendar" id="end_date_calendar"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <property name="label" translatable="yes">Games</property>
+            <child>
+              <object class="GtkScrolledWindow" id="games">
+                <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="propagate-natural-width">true</property>
+                <property name="vexpand">true</property>
+                <child>
+                  <object class="GtkColumnView" id="game_list">
+                    <property name="vexpand">true</property>
+                    <style>
+                      <class name="boxed-list"/>
+                    </style>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="col_date">
+                        <property name="title" translatable="yes">Game date</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="col_home">
+                        <property name="title" translatable="yes">Home team</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="col_home_score">
+                        <property name="title" translatable="yes">Home score</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="col_away">
+                        <property name="title" translatable="yes">Away team</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="col_away_score">
+                        <property name="title" translatable="yes">Away score</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="col_delete">
+                        <property name="title" translatable="yes">Delete</property>
+                        <property name="expand">false</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="margin-start">5</property>
+            <property name="margin-top">5</property>
+            <property name="margin-bottom">5</property>
+            <property name="spacing">5</property>
+            <property name="hexpand">true</property>
+            <property name="halign">end</property>
+            <child>
+              <object class="GtkButton" id="btn_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_ok">
+                <property name="label" translatable="yes">Ok</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
