@@ -23,11 +23,14 @@
   -->
 
 <interface>
-  <template class="RoundDialog" parent="GtkWindow">
-    <property name="title" translatable="yes">Add Round</property>
-    <property name="default-height">600</property>
-    <property name="default-width">550</property>
-    <property name="default-widget">btn_ok</property>
+  <template class="RoundDialog" parent="GtkBox">
+<!--    <property name="title" translatable="yes">Add Round</property>-->
+<!--    <property name="default-height">600</property>-->
+<!--    <property name="default-width">550</property>-->
+<!--    <property name="default-widget">btn_ok</property>-->
+    <property name="orientation">vertical</property>
+    <property name="hexpand">true</property>
+    <property name="vexpand">true</property>
 
     <child>
       <object class="GtkBox" id="round_view">
