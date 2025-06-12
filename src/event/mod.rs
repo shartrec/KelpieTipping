@@ -35,7 +35,9 @@ pub enum Event {
     PreferencesChanged,
     TeamsChanged,
     TippersChanged,
-    RoundsChanged,
+    RoundsChanged {round_id: i32},
+    GamesChanged,
+    PlaydaysChanged,
 }
 
 static MANAGER: LazyLock<EventManager> = LazyLock::new(|| EventManager {

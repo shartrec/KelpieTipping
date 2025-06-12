@@ -40,6 +40,7 @@ use crate::window::Window;
 use adw::gdk::Display;
 use adw::prelude::*;
 use adw::Application;
+use adw::subclass::prelude::ObjectSubclassIsExt;
 use async_std::task;
 // use window::Window;
 use gettextrs::{TextDomain, TextDomainError};
@@ -171,9 +172,8 @@ fn connect_actions(app: &Application, window: &Window) {
 
     let action = SimpleAction::new("new-round", None);
     action.connect_activate(clone!(#[weak] window, move |_action, _parameter| {
-        let round_dialog = RoundDialog::new(None);
-        round_dialog.set_transient_for(Some(&window));
-        round_dialog.set_visible(true);
+        let round_view = window.imp().round_view.get();
+        round_view.imp().new_round();
     }));
     app.add_action(&action);
 

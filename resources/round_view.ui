@@ -43,6 +43,7 @@
               <object class="GtkListView" id="round_list">
                 <property name="vexpand">true</property>
                 <property name="hexpand">true</property>
+                <property name="single-click-activate">true</property>
                 <style>
                   <class name="boxed-list"/>
                 </style>
@@ -58,14 +59,13 @@
             <property name="vexpand">true</property>
             <property name="hexpand">true</property>
             <child>
-              <object class="GtkGrid">
+              <object class="GtkBox" id="round_draw_box">
                 <property name="vexpand">true</property>
                 <property name="hexpand">true</property>
               </object>
             </child>
           </object>
         </child>
-
       </object>
     </child>
   </template>

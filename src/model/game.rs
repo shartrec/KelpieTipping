@@ -21,6 +21,7 @@
  *      Trevor Campbell
  *
  */
+use crate::model::team::Teams;
 use crate::util::db;
 use adw::glib::clone;
 use adw::subclass::prelude::ObjectSubclassIsExt;
@@ -79,31 +80,36 @@ glib::wrapper! {
 }
 
 impl Games {
-    pub fn new(round_id: i32) -> Games {
+    pub fn new(start: NaiveDate, end: NaiveDate, games: &mut Vec<Game>) -> Games {
+        let obj: Games = glib::Object::new();
+        obj.imp().set_games(games);
+        obj
+    }
+
+    pub fn for_round(round_id: i32) -> Games {
         let pool = db::manager().pool();
         let obj : Games /* Type */ = glib::Object::new();
-        async_std::task::block_on(clone!(#[weak] obj, async move {
-                match get_for_round(pool, round_id).await {
-                    Ok(game_list) => {
-                        let mut temp: Vec<Game> = vec![];
-                        for t in game_list.into_iter() {
-                            temp.push(t);
-                        }
-                        obj.imp().set_games(&mut temp);
-                    }
-                    Err(err) => {
-                        error!("Error getting games for round{}: {}", round_id, err);
-                    }
+        let games = async_std::task::block_on(async move {
+            get_for_round(pool, round_id).await
+        });
+        match games {
+            Ok(game_list) => {
+                let mut temp: Vec<Game> = vec![];
+                for t in game_list.into_iter() {
+                    temp.push(t);
                 }
-            }));
+                obj.imp().set_games(&mut temp);
+            }
+            Err(err) => {
+                error!("Error getting games for round{}: {}", round_id, err);
+            }
+        }
         obj
     }
 
 }
 
 mod imp {
-    use crate::model::team;
-    use crate::util::db;
     use adw::gio;
     use adw::glib::Object;
     use adw::prelude::StaticType;
@@ -111,7 +117,6 @@ mod imp {
     use chrono::NaiveDate;
     use gtk::glib;
     use std::cell::RefCell;
-    use std::ops::Div;
     use std::sync::{Arc, RwLock};
 
     #[derive(Debug)]
@@ -126,25 +131,27 @@ mod imp {
         pub away_team_score: RefCell<Option<i32>>,
     }
     impl Game {
-        pub(super) fn set_id(&self, id: i32) {
+        pub(crate) fn set_id(&self, id: i32) {
             self.game_id.replace(id);
         }
-        pub(super) fn set_round_id(&self, id: i32) {
+        pub(crate) fn set_round_id(&self, id: i32) {
             self.round_id.replace(id);
         }
-        pub(super) fn set_home_team_id(&self, id: i32) {
+        pub(crate) fn set_home_team_id(&self, id: i32) {
             self.home_team_id.replace(id);
         }
-        pub(super) fn set_away_team_id(&self, id: i32) {
+        pub(crate) fn set_away_team_id(&self, id: i32) {
             self.away_team_id.replace(id);
         }
-        pub(super) fn set_game_date(&self, date: NaiveDate) {
+        pub(crate) fn set_game_date(&self, date: NaiveDate) {
+            println!("!!!!   Setting game date to: {:?}", date);
+
             self.game_date.replace(date);
         }
-        pub(super) fn set_home_team_score(&self, score: Option<i32>) {
+        pub(crate) fn set_home_team_score(&self, score: Option<i32>) {
             self.home_team_score.replace(score);
         }
-        pub(super) fn set_away_team_score(&self, score: Option<i32>) {
+        pub(crate) fn set_away_team_score(&self, score: Option<i32>) {
             self.away_team_score.replace(score);
         }
     }
@@ -168,19 +175,24 @@ mod imp {
     }
 
     impl Games {
-        pub fn game_at(&self, position: u32) -> Option<crate::model::game::Game> {
-            let map = self
-                .games
-                .read()
-                .expect("Unable to get a lock on the aircraft hangar");
+        pub(super) fn game_at(&self, position: u32) -> Option<crate::model::game::Game> {
+            let map = self.games.read().expect("Unable to get a lock on games");
             map.iter().nth(position as usize).as_deref().map(|t| t.clone())
         }
 
+        pub(crate) fn game_by_id(&self, id: i32) -> Option<crate::model::game::Game> {
+            let map = self.games.read().expect("Unable to get a lock on games");
+            for game in map.iter() {
+                if game.id() == id as i32 {
+                    return Some(game.clone());
+                }
+            }
+            None
+        }
+
         pub fn set_games(&self, games: &mut Vec<crate::model::game::Game>) {
-            let mut map = self
-                .games
-                .write()
-                .expect("Unable to get a lock on the aircraft hangar");
+            let mut map = self.games.write().expect("Unable to get a lock on games");
+            map.clear();
             map.append(games);
         }
     }
@@ -204,19 +216,8 @@ mod imp {
         }
 
         fn n_items(&self) -> u32 {
-            let map = self
-                .games
-                .read()
-                .expect("Unable to get a lock on the games");
-            let len = map.len() as u32;
-            let x: u32 = async_std::task::block_on(async move {
-                let pool = db::manager().pool();
-                match team::get_all(&pool).await {
-                    Ok(teams) => teams.len() as u32,
-                    Err(_) => 0,
-                }
-            });
-            len.max(x.div(2))
+            let map = self.games.read().expect("Unable to get a lock on games");
+            map.len() as u32
         }
 
         fn item(&self, position: u32) -> Option<glib::Object> {
@@ -236,7 +237,7 @@ pub async fn insert(
     game_date: NaiveDate,
     home_team_score: Option<i32>,
     away_team_score: Option<i32>,
-) -> Result<Game, String> {
+) -> Result<i32, String> {
     let result = sqlx::query(
         "INSERT INTO games (round_id, home_team_id, away_team_id, game_date, home_team_score, away_team_score) \
          VALUES ($1, $2, $3, $4, $5, $6) RETURNING game_id",
@@ -253,15 +254,7 @@ pub async fn insert(
     match result {
         Ok(row) => {
             let game_id = row.get::<i32, _>(0);
-            Ok(Game::new(
-                game_id,
-                round_id,
-                home_team_id,
-                away_team_id,
-                game_date,
-                home_team_score,
-                away_team_score,
-            ))
+            Ok(game_id)
         }
         Err(e) => {
             error!("Error inserting game: {}", e);

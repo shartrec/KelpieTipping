@@ -43,9 +43,30 @@
         <property name="margin-bottom">5</property>
 
         <child>
+          <object class="GtkBox">
+            <property name="margin-start">5</property>
+            <property name="margin-top">5</property>
+            <property name="margin-bottom">5</property>
+            <property name="spacing">5</property>
+            <style>
+              <class name="header-buttons"/>
+            </style>
+            <child>
+              <object class="GtkButton" id="btn_save">
+                <property name="tooltip_text" translatable="yes">Save</property>
+                <property name="icon-name">document-save-symbolic</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_revert">
+                <property name="tooltip_text" translatable="yes">Refresh</property>
+                <property name="icon-name">document-revert-symbolic</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
           <object class="GtkGrid">
-            <!--            <property name="vexpand">true</property>-->
-            <!--            <property name="hexpand">true</property>-->
             <property name="row-spacing">8</property>
             <property name="column-spacing">5</property>
             <property name="margin-bottom">5</property>
@@ -157,14 +178,15 @@
           <object class="GtkFrame">
             <property name="label" translatable="yes">Games</property>
             <child>
-              <object class="GtkScrolledWindow" id="games">
-                <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
-                <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
-                <property name="propagate-natural-width">true</property>
+              <object class="GtkBox" id="games">
+<!--                <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>-->
+<!--                <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>-->
+<!--                <property name="propagate-natural-width">true</property>-->
                 <property name="vexpand">true</property>
+                <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkColumnView" id="game_list">
-                    <property name="vexpand">true</property>
+                    <property name="vexpand">false</property>
                     <style>
                       <class name="boxed-list"/>
                     </style>
@@ -194,6 +216,11 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkColumnViewColumn" id="fill_1">
+                        <property name="expand">true</property>">
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkColumnViewColumn" id="col_delete">
                         <property name="title" translatable="yes">Delete</property>
                         <property name="expand">false</property>
@@ -201,27 +228,25 @@
                     </child>
                   </object>
                 </child>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child>
-          <object class="GtkBox">
-            <property name="orientation">horizontal</property>
-            <property name="margin-start">5</property>
-            <property name="margin-top">5</property>
-            <property name="margin-bottom">5</property>
-            <property name="spacing">5</property>
-            <property name="hexpand">true</property>
-            <property name="halign">end</property>
-            <child>
-              <object class="GtkButton" id="btn_cancel">
-                <property name="label" translatable="yes">Cancel</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkButton" id="btn_ok">
-                <property name="label" translatable="yes">Ok</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="margin-start">5</property>
+                    <property name="margin-top">5</property>
+                    <property name="margin-bottom">5</property>
+                    <property name="spacing">5</property>
+<!--                    <style>-->
+<!--                      <class name="header-buttons"/>-->
+<!--                    </style>-->
+                    <property name="halign">end</property>
+                    <property name="hexpand">true</property>
+                    <child>
+                      <object class="GtkButton" id="btn_add_game">
+                        <property name="tooltip_text" translatable="yes">Add Game</property>
+                        <property name="icon-name">list-add-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
           </object>

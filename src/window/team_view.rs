@@ -33,7 +33,7 @@ mod imp {
     use crate::model::team::{Team, Teams};
     use crate::util::db;
     use crate::window::edit_team::TeamDialog;
-    use crate::window::util::build_column_factory;
+    use crate::window::util::{build_column_factory, build_del_column_factory};
     use adw::glib::clone;
     use glib::subclass::InitializingObject;
     use gtk::{Button, ColumnView, ColumnViewColumn, Label, ListItem, SignalListItemFactory, SingleSelection};
@@ -131,41 +131,10 @@ mod imp {
                 label.set_xalign(0.0);
             })));
 
-            let f =  {
-                let factory = SignalListItemFactory::new();
-                factory.connect_setup(move |_, list_item| {
-                    let button = Button::new();
-                    button.set_icon_name("edit-delete");
-
-                    button.connect_clicked(delete_team);
-                    list_item
-                        .downcast_ref::<ListItem>()
-                        .expect("Needs to be ListItem")
-                        .set_child(Some(&button));
-                });
-
-                factory.connect_bind(move |_f, list_item| {
-                    // Get `StringObject` from `ListItem`
-                    let obj = list_item
-                        .downcast_ref::<ListItem>()
-                        .expect("Needs to be ListItem")
-                        .item()
-                        .and_downcast::<Team>()
-                        .expect("The item has to be an <T>.");
-
-                    // Get `Label` from `ListItem`
-                    let button = list_item
-                        .downcast_ref::<ListItem>()
-                        .expect("Needs to be ListItem")
-                        .child()
-                        .and_downcast::<Button>()
-                        .expect("The child has to be a `Label`.");
-
-                    button.set_action_target(Some(obj.id()));
-
-                });
-                factory
-            };
+            // Create a factory for the delete button column
+            let f = build_del_column_factory(
+                |button: &Button, team: &Team| button.set_action_target(Some(team.id())),
+                delete_team);
             self.col_delete.set_factory(Some(&f));
         }
     }
@@ -179,8 +148,8 @@ mod imp {
             if let Some(id) = value.get::<i32>() {
                 let pool = db::manager().pool();
                 glib::spawn_future_local(clone!(async move {
-                let _ = team::delete(pool, id).await;
-                event::manager().notify_listeners(Event::TeamsChanged);
+                    let _ = team::delete(pool, id).await;
+                    event::manager().notify_listeners(Event::TeamsChanged);
             }));
             }
         }

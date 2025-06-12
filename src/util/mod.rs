@@ -24,6 +24,8 @@
 pub(crate) mod info;
 pub(crate) mod db;
 pub(crate) mod test_utils;
+pub(crate) mod date;
+pub(crate) mod game_allocator;
 
 use std::error::Error;
 use log::LevelFilter;
@@ -57,7 +59,7 @@ impl Logger {
                         .unwrap().build();
                     CombinedLogger::init(vec![
                         TermLogger::new(
-                            LevelFilter::Warn,
+                            LevelFilter::Info,
                             config,
                             TerminalMode::Mixed,
                             ColorChoice::Auto,

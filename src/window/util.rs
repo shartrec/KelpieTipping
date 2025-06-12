@@ -21,7 +21,7 @@
  *      Trevor Campbell
  *
  */
-
+use std::sync::Arc;
 use crate::util;
 use crate::window::Window;
 use adw::gdk::{Key, ModifierType};
@@ -32,8 +32,9 @@ use adw::AlertDialog;
 use gettextrs::gettext;
 use gtk::gdk::Texture;
 use gtk::glib::Object;
-use gtk::prelude::ButtonExt;
+use gtk::prelude::{ActionableExtManual, ButtonExt};
 use gtk::{AboutDialog, Button, Entry, Label, ListItem, Root, SignalListItemFactory, Widget};
+use crate::model::game::Game;
 
 pub(crate) fn connect_escape<W: IsA<Widget> + adw::glib::clone::Downgrade>(widget: &W, button: &Button) {
     // Create the key controller
@@ -99,6 +100,47 @@ pub(crate) fn build_column_factory<F: Fn(Label, &T) + 'static, T: IsA<Object>>(f
         f(label, &obj);
     });
     factory
+}
+
+pub(crate) fn build_del_column_factory<FGet: Fn(&Button, &T) + 'static, T: IsA<Object>, FDel: Fn(&Button) + 'static>(get_id: FGet, do_delete: FDel) -> SignalListItemFactory {
+    let f = {
+        let do_delete = Arc::new(do_delete);
+        let factory = SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            let button = Button::new();
+            button.set_icon_name("list-remove-symbolic");
+            let do_delete = Arc::clone(&do_delete);
+            button.connect_clicked(move |btn| {
+                do_delete(&btn);
+            });
+            list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .set_child(Some(&button));
+        });
+
+        factory.connect_bind(move |_f, list_item| {
+            // Get `StringObject` from `ListItem`
+            let obj = list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .item()
+                .and_downcast::<T>()
+                .expect("The item has to be an <T>.");
+
+            // Get `Label` from `ListItem`
+            let button = list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .child()
+                .and_downcast::<Button>()
+                .expect("The child has to be a `Label`.");
+
+            get_id(&button, &obj);
+        });
+        factory
+    };
+    f
 }
 
 pub(crate) fn show_help_about(window: &Window) {

@@ -33,7 +33,7 @@ glib::wrapper! {
 }
 
 impl Team {
-    pub fn new(team_id: Option<i32>, name: String, nickname: String) -> Team
+    pub fn new(team_id: i32, name: String, nickname: String) -> Team
     {
         let obj: Team = glib::Object::new();
         obj.imp().set_id(team_id);
@@ -42,8 +42,8 @@ impl Team {
         obj
     }
 
-    pub fn id(&self) -> Option<i32> {
-        self.imp().team_id.borrow().clone()
+    pub fn id(&self) -> i32 {
+        self.imp().id.borrow().clone()
     }
     pub fn name(&self) -> String {
         self.imp().name.borrow().clone()
@@ -51,7 +51,7 @@ impl Team {
     pub fn nickname(&self) -> String {
         self.imp().nickname.borrow().clone()
     }
-    pub fn set_id(&self, id: Option<i32>) {
+    pub fn set_id(&self, id: i32) {
         self.imp().set_id(id);
     }
     pub fn set_name(&self, name: String) {
@@ -86,14 +86,14 @@ mod imp {
 
     #[derive(Default)]
     pub struct Team {
-        pub(super) team_id: RefCell<Option<i32>>,
+        pub(crate) id: RefCell<i32>,
         pub(super) name: RefCell<String>,
         pub(super) nickname: RefCell<String>,
     }
 
     impl Team {
-        pub(super) fn set_id(&self, id: Option<i32>) {
-            self.team_id.replace(id);
+        pub(super) fn set_id(&self, id: i32) {
+            self.id.replace(id);
         }
 
         pub(super) fn set_name(&self, name: String) {
@@ -132,11 +132,6 @@ mod imp {
                 .expect("Unable to get a lock on the aircraft hangar");
             map.iter().nth(position as usize).as_deref().map(|t| t.clone())
         }
-
-        pub fn add_team(&self, team: crate::model::team::Team) {
-            let mut binding = self.teams.write().expect("Can't get lock on teams cache");
-            binding.insert(0, team);
-        }
     }
 
     // Basic declaration of our type for the GObject type system
@@ -152,19 +147,20 @@ mod imp {
             self.parent_constructed();
 
             let pool = db::manager().pool();
-            async_std::task::block_on(clone!(#[weak(rename_to = list)] self, async move {
-                match get_all(pool).await {
-                    Ok(team_list) => {
-                        let mut binding = list.teams.write().expect("Can't get lock on teams cache");
-                        for t in team_list.into_iter() {
-                            binding.push(t);
-                        }
-                    }
-                    Err(err) => {
-                        error!("Error getting all teams: {}", err);
+            let teams = async_std::task::block_on(async move {
+                get_all(pool).await
+            });
+            match teams {
+                Ok(team_list) => {
+                    let mut binding = self.teams.write().expect("Can't get lock on teams cache");
+                    for t in team_list.into_iter() {
+                        binding.push(t);
                     }
                 }
-            }));
+                Err(err) => {
+                    error!("Error getting all teams: {}", err);
+                }
+            }
         }
     }
 
@@ -199,7 +195,7 @@ pub async fn insert(pool: &PgPool, name: String, nickname: String) -> Result<cra
     match result {
         Ok(row) => {
             let id = row.get::<i32, _>(0);
-            Ok(crate::model::team::Team::new(Some(id), name, nickname))
+            Ok(crate::model::team::Team::new(id, name, nickname))
         },
         Err(e) => {
             error!("Error inserting team: {}", e);
@@ -254,7 +250,7 @@ pub async fn get(pool: &PgPool, id: i32) -> Result<Option<crate::model::team::Te
                     let team_id = row.get::<i32, _>(0);
                     let name = row.get::<String, _>(1);
                     let nickname = row.get::<String, _>(2);
-                    Ok(Some(Team::new(Some(team_id), name, nickname)))
+                    Ok(Some(Team::new(team_id, name, nickname)))
                 },
                 None => {
                     Ok(None)
@@ -280,7 +276,7 @@ pub async fn get_all(pool: &PgPool) -> Result<Vec<crate::model::team::Team>, Str
                 let team_id = row.get::<i32, _>(0);
                 let name = row.get::<String, _>(1);
                 let nickname = row.get::<String, _>(2);
-                teams.push(Team::new(Some(team_id), name, nickname));
+                teams.push(Team::new(team_id, name, nickname));
             }
             Ok(teams)
         },

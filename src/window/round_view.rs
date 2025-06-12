@@ -23,9 +23,11 @@
  */
 #![forbid(unsafe_code)]
 
+use adw::gio;
 use gtk::{self, glib, prelude::*, subclass::prelude::*, CompositeTemplate};
 
 mod imp {
+    use adw::gio::{SimpleAction, SimpleActionGroup};
     use super::*;
     use crate::event;
     use crate::event::Event;
@@ -35,13 +37,17 @@ mod imp {
     use crate::window::util::build_column_factory;
     use adw::glib::clone;
     use glib::subclass::InitializingObject;
-    use gtk::{Button, Label, ListView, SingleSelection};
+    use gtk::{Button, Label, ListView, ScrolledWindow, SingleSelection};
 
     #[derive(Default, CompositeTemplate)]
     #[template(resource = "/com/shartrec/kelpie_tipping/round_view.ui")]
     pub struct RoundView {
         #[template_child]
+        pub round_draw: TemplateChild<ScrolledWindow>,
+        #[template_child]
         pub round_list: TemplateChild<ListView>,
+        #[template_child]
+        pub round_draw_box: TemplateChild<gtk::Box>,
     }
 
     impl RoundView {
@@ -49,18 +55,37 @@ mod imp {
             if let Some(rx) = event::manager().register_listener() {
                 glib::spawn_future_local(clone!(#[weak(rename_to = view)] self, async move {
                     while let Ok(ev) = rx.recv().await {
-                        if let Event::RoundsChanged = ev {
-                            view.refresh();
+                        if let Event::RoundsChanged{round_id} = ev {
+                            view.refresh(Some(round_id));
                         }
                     }
                 }));
             }
-            self.refresh();
+            self.refresh(None);
         }
 
-        fn refresh(&self) {
+        pub(crate) fn new_round(&self) {
+            while let Some(old_round) = self.round_draw_box.first_child() {
+                self.round_draw_box.remove(&old_round);
+            }
+            let round_dialog = RoundDialog::new(&self.round_draw_box, None);
+        }
+
+        fn refresh(&self, round_id: Option<i32>) {
             let selection_model = SingleSelection::new(Some(Rounds::new()));
             self.round_list.set_model(Some(&selection_model));
+            // find the position in the model with the given round_id or 0 if not found
+            let position = if let Some(id) = round_id {
+                let rounds = selection_model.model().unwrap().downcast::<Rounds>().unwrap();
+                let x = rounds.imp().rounds.read().expect("Failed to read rounds");
+                x.iter().position(|r| r.id() == id)
+                    .unwrap_or(0) as u32
+            } else {
+                0
+            };
+
+            selection_model.select_item(position, true);
+            self.activate_round(position);
             self.round_list.queue_draw();
         }
 
@@ -70,6 +95,14 @@ mod imp {
                 object.downcast::<Round>().ok()
             } else {
                 None
+            }
+        }
+        fn activate_round(&self, position: u32) {
+            if let Some(round) = self.get_model_round(position) {
+                while let Some(old_round) = self.round_draw_box.first_child() {
+                    self.round_draw_box.get().remove(&old_round);
+                }
+                let _round_dialog = RoundDialog::new(&self.round_draw_box, Some(round.clone()));
             }
         }
     }
@@ -96,19 +129,8 @@ mod imp {
             self.initialise();
 
             self.round_list.connect_activate(
-                clone!(#[weak(rename_to = view)] self, move | _list_view, position | {
-                    if let Ok(w) = view.obj().root()
-                        .as_ref()
-                        .expect("Can't get the root window")
-                        .clone()
-                        .downcast::<gtk::Window>() {
-
-                        if let Some(round) = view.get_model_round(position) {
-                            let round_dialog = RoundDialog::new(Some(round.clone()));
-                            round_dialog.set_transient_for(Some(&w));
-                            round_dialog.set_visible(true);
-                        }
-                    }
+                clone!(#[weak(rename_to = view)] self, move |_list_view, position| {
+                   view.activate_round(position);
                 }),
             );
 
@@ -154,6 +176,7 @@ mod imp {
             // };
             // self.col_delete.set_factory(Some(&f));
         }
+
     }
 
     impl BoxImpl for RoundView {}

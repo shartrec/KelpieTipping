@@ -26,6 +26,7 @@ use adw::{gio, glib};
 use chrono::NaiveDate;
 use log::error;
 use sqlx::{PgPool, Row};
+use sqlx::postgres::PgRow;
 
 // To use the Round in a Gio::ListModel it needs to ba a glib::Object, so we do all this fancy subclassing stuff
 // Public part of the Model type.
@@ -87,7 +88,7 @@ glib::wrapper! {
 }
 
 impl Playday {
-    pub fn new(date: Option<NaiveDate>) -> Playday
+    pub fn new(date: NaiveDate) -> Playday
     {
         let obj: Playday = glib::Object::new();
         obj.imp().set_date(date);
@@ -122,10 +123,12 @@ mod imp {
     use adw::subclass::prelude::{ListModelImpl, ObjectImpl, ObjectImplExt, ObjectSubclass};
     use adw::{gio, glib};
     use chrono::{Local, NaiveDate};
-    use log::error;
+    use log::{error, info};
     use std::cell::RefCell;
     use std::ops::{Deref, Sub};
     use std::sync::{Arc, RwLock};
+    use crate::event;
+    use crate::event::Event;
 
     #[derive(Debug)]
     #[derive(Default)]
@@ -190,19 +193,20 @@ mod imp {
             self.parent_constructed();
 
             let pool = db::manager().pool();
-            async_std::task::block_on(clone!(#[weak(rename_to = list)] self, async move {
-                match get_all(pool).await {
-                    Ok(round_list) => {
-                        let mut binding = list.rounds.write().expect("Can't get lock on rounds cache");
-                        for r in round_list.into_iter() {
-                            binding.push(r);
-                        }
-                    }
-                    Err(err) => {
-                        error!("Error getting all rounds: {}", err);
+            let rounds = async_std::task::block_on( async move {
+                get_all(pool).await
+            });
+            match rounds {
+                Ok(round_list) => {
+                    let mut binding = self.rounds.write().expect("Can't get lock on rounds cache");
+                    for r in round_list.into_iter() {
+                        binding.push(r);
                     }
                 }
-            }));
+                Err(err) => {
+                    error!("Error getting all rounds: {}", err);
+                }
+            }
         }
     }
 
@@ -228,24 +232,20 @@ mod imp {
     #[derive(Debug)]
     #[derive(Default)]
     pub struct Playday {
-        pub date: RefCell<Option<NaiveDate>>,
+        pub date: RefCell<NaiveDate>,
     }
 
     impl Playday {
-        pub fn set_date(&self, date: Option<NaiveDate>) {
+        pub fn set_date(&self, date: NaiveDate) {
             self.date.replace(date);
         }
 
-        pub fn date(&self) -> Option<NaiveDate> {
+        pub fn date(&self) -> NaiveDate {
             self.date.borrow().clone()
         }
 
         pub fn to_string(&self) -> String {
-            match self.date() {
-                Some(d) => d.format("%a, %-d %b").to_string(),
-                None => "(none)".to_string(),
-            }
-
+            self.date.borrow().format("%a, %-d %b").to_string()
         }
     }
     /// Basic declaration of our type for the GObject type system
@@ -262,8 +262,8 @@ mod imp {
     }
 
     pub struct Playdays {
-        start_date: RefCell<NaiveDate>,
-        end_date: RefCell<NaiveDate>,
+        pub(crate) start_date: RefCell<NaiveDate>,
+        pub(crate) end_date: RefCell<NaiveDate>,
     }
 
 
@@ -274,18 +274,48 @@ mod imp {
         }
 
         pub fn set_start_date(&self, start_date: NaiveDate) {
+
+            let old_size = self.n_items() as i32;
             let old_date = self.start_date.replace(start_date);
+            if start_date > *self.end_date.borrow().deref() {
+                self.end_date.replace(start_date);
+            };
             if old_date != start_date {
-                self.update_model(&old_date, self.start_date.borrow().deref(),
-                                  self.end_date.borrow().deref(), self.end_date.borrow().deref());
+                let new_size = self.n_items() as i32;
+
+                let days_changed = new_size - old_size;
+                let (added, removed) = if days_changed >= 0 {
+                    (days_changed, 0)
+                } else {
+                    (0, 0 - days_changed)
+                };
+
+                println!("Playdays changed: old_size={}, new_size={}, added={}, removed={}", old_size, new_size, added, removed);
+                self.obj().items_changed(0, removed as u32, added as u32);
+                event::manager().notify_listeners(Event::PlaydaysChanged);
             }
         }
 
         pub fn set_end_date(&self, end_date: NaiveDate) {
+            let old_size = self.n_items() as i32;
             let old_date = self.end_date.replace(end_date);
+            if end_date < *self.start_date.borrow().deref() {
+                self.start_date.replace(end_date);
+            };
+
             if old_date != end_date {
-                self.update_model(self.start_date.borrow().deref(), self.start_date.borrow().deref(),
-                                  &old_date, self.end_date.borrow().deref());
+                let new_size = self.n_items() as i32;
+
+                let days_changed = new_size - old_size;
+                let (added, removed) = if days_changed >= 0 {
+                    (days_changed, 0)
+                } else {
+                    (0, 0 - days_changed)
+                };
+                println!("Playdays changed: old_size={}, new_size={}, added={}, removed={}", old_size, new_size, added, removed);
+
+                self.obj().items_changed((old_size - 1 - removed) as u32, removed as u32, added as u32);
+                event::manager().notify_listeners(Event::PlaydaysChanged);
             }
         }
 
@@ -295,22 +325,6 @@ mod imp {
 
         pub fn end_date(&self) -> NaiveDate {
             self.end_date.borrow().clone()
-        }
-
-        fn update_model(&self, old_start: &NaiveDate, new_start: &NaiveDate, old_end: &NaiveDate, new_end: &NaiveDate) {
-
-            let mut removed = old_end.sub(*old_start).num_days() + 1;
-            let mut added = new_end.sub(*new_start).num_days() + 1;
-
-            if removed < 1 || removed > 9999 {
-                removed = 1;
-            }
-            if added < 1 || added > 9999 {
-                added = 1;
-            }
-            MainContext::default().spawn_local(clone!(#[weak(rename_to = model)] self, async move {
-                model.obj().items_changed(1, removed as u32, added as u32);
-            }));
         }
     }
 
@@ -343,22 +357,13 @@ mod imp {
         }
 
         fn n_items(&self) -> u32 {
-            let days = self.end_date().sub(self.start_date()).num_days();
-            let items = if days >= 0 {
-                days as u32 + 2
-            } else {
-                2
-            };
-            items
+            let days = self.end_date().sub(self.start_date()).num_days() + 1;
+            days.max(1) as u32
         }
 
         fn item(&self, position: u32) -> Option<glib::Object> {
-            let pd = if position == 0 {
-                super::Playday::new(None)
-            } else {
-                let day = self.start_date() + chrono::Duration::days((position - 1) as i64);
-                super::Playday::new(Some(day))
-            };
+            let day = self.start_date() + chrono::Duration::days(position as i64);
+            let pd = super::Playday::new(day);
             Some(Object::from(pd))
         }
     }
@@ -369,7 +374,7 @@ pub async fn insert(
     round_number: i32,
     start_date: NaiveDate,
     end_date: NaiveDate,
-) -> Result<Round, String> {
+) -> Result<i32, String> {
     let result = sqlx::query(
         "INSERT INTO rounds (round_number, start_date, end_date) VALUES ($1, $2, $3) RETURNING round_id",
     )
@@ -382,7 +387,7 @@ pub async fn insert(
     match result {
         Ok(row) => {
             let id = row.get::<i32, _>(0);
-            Ok(Round::new(id, round_number, start_date, end_date))
+            Ok(id)
         }
         Err(e) => {
             error!("Error inserting round: {}", e);
@@ -432,6 +437,14 @@ pub async fn delete(pool: &PgPool, id: i32) -> Result<u64, String> {
     }
 }
 
+fn build_round(row: PgRow) -> Round {
+    let round_id = row.get::<i32, _>(0);
+    let round_number = row.get::<i32, _>(1);
+    let start_date = row.get::<NaiveDate, _>(2);
+    let end_date = row.get::<NaiveDate, _>(3);
+    Round::new(round_id, round_number, start_date, end_date)
+}
+
 pub async fn get(pool: &PgPool, id: i32) -> Result<Option<Round>, String> {
     let result = sqlx::query("SELECT round_id, round_number, start_date, end_date FROM rounds WHERE round_id=$1")
         .bind(id)
@@ -441,11 +454,26 @@ pub async fn get(pool: &PgPool, id: i32) -> Result<Option<Round>, String> {
     match result {
         Ok(row) => match row {
             Some(row) => {
-                let round_id = row.get::<i32, _>(0);
-                let round_number = row.get::<i32, _>(1);
-                let start_date = row.get::<NaiveDate, _>(2);
-                let end_date = row.get::<NaiveDate, _>(3);
-                Ok(Some(Round::new(round_id, round_number, start_date, end_date)))
+                Ok(Some(build_round(row)))
+            }
+            None => Ok(None),
+        },
+        Err(e) => {
+            error!("Error getting round: {}", e);
+            Err(format!("Error getting round: {}", e))
+        }
+    }
+}
+
+pub async fn get_last_round (pool: &PgPool) -> Result<Option<Round>, String> {
+    let result = sqlx::query("SELECT round_id, round_number, start_date, end_date FROM rounds ORDER BY round_number DESC LIMIT 1")
+        .fetch_optional(pool)
+        .await;
+
+    match result {
+        Ok(row) => match row {
+            Some(row) => {
+                Ok(Some(build_round(row)))
             }
             None => Ok(None),
         },
@@ -465,14 +493,7 @@ pub async fn get_all(pool: &PgPool) -> Result<Vec<Round>, String> {
         Ok(rows) => {
             let mut rounds = Vec::new();
             for row in rows {
-                let round_id = row.get::<i32, _>(0);
-                let round_number = row.get::<i32, _>(1);
-                let start_date = row.get::<NaiveDate, _>(2);
-                let end_date = row.get::<NaiveDate, _>(3);
-                rounds.push(Round::new(round_id,
-                                       round_number,
-                                       start_date,
-                                       end_date));
+                rounds.push(build_round(row));
             }
             Ok(rounds)
         }

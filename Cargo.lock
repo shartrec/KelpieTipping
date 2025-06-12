@@ -17,6 +17,7 @@ dependencies = [
  "libadwaita",
  "log",
  "preferences",
+ "rand",
  "rolling-file",
  "simplelog",
  "sqlx",

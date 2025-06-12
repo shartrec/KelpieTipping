@@ -11,7 +11,7 @@
     <file compressed="true" preprocess="xml-stripblanks">tipper_view.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">tipper_dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">round_view.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">round_dialog.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">round_panel.ui</file>
 
     <!-- Icon images follow -->
     <file>images/kelpiedog_120x120_transparent.png</file>

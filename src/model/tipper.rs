@@ -147,19 +147,20 @@ mod imp {
             self.parent_constructed();
 
             let pool = db::manager().pool();
-            async_std::task::block_on(clone!(#[weak(rename_to = list)] self, async move {
-                match get_all(pool).await {
-                    Ok(tipper_list) => {
-                        let mut binding = list.tippers.write().expect("Can't get lock on tippers cache");
-                        for t in tipper_list.into_iter() {
-                            binding.push(t);
-                        }
-                    }
-                    Err(err) => {
-                        error!("Error getting all tippers: {}", err);
+            let tippers = async_std::task::block_on(async move {
+                get_all(pool).await
+            });
+            match tippers {
+                Ok(tipper_list) => {
+                    let mut binding = self.tippers.write().expect("Can't get lock on tippers cache");
+                    for t in tipper_list.into_iter() {
+                        binding.push(t);
                     }
                 }
-            }));
+                Err(err) => {
+                    error!("Error getting all tippers: {}", err);
+                }
+            }
         }
     }
 

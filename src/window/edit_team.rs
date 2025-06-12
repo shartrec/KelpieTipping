@@ -38,7 +38,7 @@ mod imp {
         pub fn set_team(&self, team: Option<Team>) {
             match team {
                 Some(team) => {
-                    self.team_id.replace(team.id());
+                    self.team_id.replace(Some(team.id()));
                     self.team_name.set_text(&team.name());
                     self.team_nickname.set_text(&team.nickname());
                 }
